@@ -2,6 +2,14 @@ const pool = require('../lib/utils/pool');
 const setup = require('../data/setup');
 const request = require('supertest');
 const app = require('../lib/app');
+const UserService = require('../lib/services/UserService');
+
+const mockUser = {
+  firstName: 'Test',
+  lastName: 'User',
+  email: 'test@example.com',
+  password: '12345',
+};
 
 describe('restaurant routes', () => {
   beforeEach(() => {
@@ -62,6 +70,32 @@ describe('restaurant routes', () => {
         "image": "https://media-cdn.tripadvisor.com/media/photo-o/05/dd/53/67/an-assortment-of-donuts.jpg",
         "name": "Pip's Original",
         "website": "http://www.PipsOriginal.com",
+      }
+    `);
+  });
+
+  const registerAndLogin = async (userProps = {}) => {
+    const password = userProps.password ?? mockUser.password;
+    const agent = request.agent(app);
+    const user = await UserService.create({ ...mockUser, ...userProps });
+    const { email } = user;
+    await agent.post('/api/v1/users/sessions').send({ email, password });
+    return [agent, user];
+  };
+
+  it('/restaurants/:id/reviews creates new review', async () => {
+    const [agent] = await registerAndLogin();
+    const resp = await agent
+      .post('/api/v1/restaurants/1/reviews')
+      .send({ stars: 5, detail: 'this restaurant was the bees knees' });
+    expect(resp.status).toBe(200);
+    expect(resp.body).toMatchInlineSnapshot(`
+      Object {
+        "detail": "this restaurant was the bees knees",
+        "id": "4",
+        "restaurant_id": "1",
+        "stars": 5,
+        "user_id": "4",
       }
     `);
   });
