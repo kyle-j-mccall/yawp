@@ -11,6 +11,11 @@ const mockUser = {
   password: '12345',
 };
 
+const mockReview = {
+  stars: 1,
+  detail: 'absolute shit',
+};
+
 describe('review routes', () => {
   beforeEach(() => {
     return setup(pool);
@@ -28,10 +33,14 @@ describe('review routes', () => {
   };
   it('/reviews/:id deletes a review', async () => {
     const [agent] = await registerAndLogin();
-    const resp = await agent.delete('/api/v1/reviews/1');
+    const postResp = await agent
+      .post('/api/v1/restaurants/1/reviews')
+      .send(mockReview);
+    console.log('body', postResp.body);
+    const resp = await agent.delete('/api/v1/reviews/4');
     expect(resp.status).toBe(200);
 
-    const reviewResp = await agent.get('/api/v1/reviews/1');
+    const reviewResp = await agent.get('/api/v1/reviews/4');
     expect(reviewResp.status).toBe(404);
   });
 });
